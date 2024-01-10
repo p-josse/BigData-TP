@@ -8,33 +8,23 @@ db_config = {
     'dbname': 'postgres',
     'user': 'admin',
     'password': 'adminadmin',
-    'host': 'localhost',
+    'host': '172.17.0.2',
     'port': '5432'
 }
-
-# Define endpoints
 
 @app.route('/films', methods=['GET'])
 def get_films():
     try:
-        # Establish a connection to the database
         conn = psycopg2.connect(**db_config)
-
-        # Create a cursor object to execute SQL queries
         cursor = conn.cursor()
 
-        # Execute the query to retrieve all films
         cursor.execute("SELECT * FROM film")
-
-        # Fetch all rows as a list of dictionaries
         films = cursor.fetchall()
 
-        # Close the cursor and connection
         cursor.close()
         conn.close()
 
-        # Convert the result to a list of dictionaries for JSON serialization
-        film_list = [{"id": film[0], "name": film[1], "description": film[2]} for film in films]
+        film_list = [{"id": film[0], "title": film[1], "description": film[2]} for film in films]
 
         return jsonify({"films": film_list})
 
@@ -43,27 +33,46 @@ def get_films():
 
 @app.route('/films', methods=['POST'])
 def add_film():
-    data = request.get_json()
-    movie_name = data.get('name')
-    movie_description = data.get('description')
+    try:
+        movie_title = "$MOVIE_NAME"
+        movie_description = "$MOVIE_DESCRIPTION"
+        language_id = 1  
 
-    # Implement logic to add a new film to the database
-    # You should use psycopg2 to interact with the PostgreSQL database
-    # Example:
-    # conn = psycopg2.connect(**db_config)
-    # cursor = conn.cursor()
-    # cursor.execute("INSERT INTO films (name, description) VALUES (%s, %s)", (movie_name, movie_description))
-    # conn.commit()
-    # cursor.close()
-    # conn.close()
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
 
-    return jsonify({"message": "Film added successfully"})
+        cursor.execute("INSERT INTO film (title, description, language_id) VALUES (%s, %s, %s) RETURNING film_id", (movie_title, movie_description, language_id))
+        new_film_id = cursor.fetchone()[0]
 
-@app.route('/films/<film_id>', methods=['GET'])
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"message": "Film added successfully", "film_id": new_film_id})
+
+    except psycopg2.Error as e:
+        return jsonify({"error": f"Database error: {e}"}), 500
+
+@app.route('/films/<int:film_id>', methods=['GET'])
 def get_film(film_id):
-    # Implement logic to retrieve and return the details of the specified film
-    return jsonify({"film": {}})
+    try:
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM film WHERE film_id = %s", (film_id,))
+        film = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if film:
+            return jsonify({"film": {"film_id": film[0], "title": film[1], "description": film[2]}})
+        else:
+            return jsonify({"error": "Film not found"}), 404
+
+    except psycopg2.Error as e:
+        return jsonify({"error": f"Database error: {e}"}), 500
 
 # Run the application
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=8080, host='0.0.0.0')
