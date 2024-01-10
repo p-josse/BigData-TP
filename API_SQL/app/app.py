@@ -34,14 +34,19 @@ def get_films():
 @app.route('/films', methods=['POST'])
 def add_film():
     try:
-        movie_title = "$MOVIE_NAME"
-        movie_description = "$MOVIE_DESCRIPTION"
-        language_id = 1  
+        data = request.get_json()
+
+        if not data or 'title' not in data or 'description' not in data:
+            return jsonify({"error": "Invalid request data"}), 400
+
+        title = data['title']
+        description = data['description']
+        language_id = data.get('language_id', 1)
 
         conn = psycopg2.connect(**db_config)
         cursor = conn.cursor()
 
-        cursor.execute("INSERT INTO film (title, description, language_id) VALUES (%s, %s, %s) RETURNING film_id", (movie_title, movie_description, language_id))
+        cursor.execute("INSERT INTO film (title, description, language_id) VALUES (%s, %s, %s) RETURNING film_id", (title, description, language_id))
         new_film_id = cursor.fetchone()[0]
 
         conn.commit()
