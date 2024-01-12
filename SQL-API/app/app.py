@@ -78,6 +78,5 @@ def get_film(film_id):
     except psycopg2.Error as e:
         return jsonify({"error": f"Database error: {e}"}), 500
 
-# Run the application
 if __name__ == '__main__':
     app.run(debug=True, port=8080, host='0.0.0.0')
