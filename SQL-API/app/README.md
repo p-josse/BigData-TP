@@ -1,6 +1,6 @@
 # API Flask into PostgreSQL
 
-## Setup PostgreSQL DB as in TP1
+## Setup PostgreSQL DB
 
 ```sh
 docker pull totofunku/sql-cours
@@ -18,7 +18,7 @@ docker run --name postgresql -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=adminad
 docker run --name my-pgadmin -p 82:80 -e "PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org" -e "PGADMIN_DEFAULT_PASSWORD=test1234" -d dpage/pgadmin4
 ```
 
-Restore the DB in the new server using the `dvdrental-2.tar` file.
+Restore the DB in the new server using the `dvdrental-2.tar` file as in the TP1.
 
 ## Move to /app
 
